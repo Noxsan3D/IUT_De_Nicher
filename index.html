@@ -9,10 +9,44 @@
     
     <style>
         /* --- LE DESIGN (CSS) --- */
+        
+        /* 1. DÉFINITION DES VARIABLES DE COULEUR (MODE CLAIR PAR DÉFAUT) */
+        :root {
+            --bg-color: #f4f9f4; /* Vert très pâle */
+            --card-bg: #ffffff;
+            --text-color: #2c3e50; /* Gris très foncé */
+            --title-color: #27ae60; /* Vert principal */
+            --subtitle-color: #7f8c8d; /* Gris moyen */
+            --grid-line-color: rgba(0,0,0,0.1);
+            --event-bg: #ecf0f1;
+            
+            /* Les couleurs d'accent ne changent pas forcément */
+            --accent-green: #2ecc71;
+            --accent-blue: #2980b9;
+            --accent-blue-hover: #3498db;
+            --accent-red: #e74c3c;
+            --accent-dark: #2c3e50;
+            --accent-dark-hover: #34495e;
+        }
+
+        /* 2. REDÉFINITION DES VARIABLES POUR LE MODE SOMBRE AUTOMATIQUE */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212; /* Noir très profond */
+                --card-bg: #1e1e1e; /* Gris très foncé pour les cartes */
+                --text-color: #e0e0e0; /* Blanc cassé pour le texte */
+                --title-color: #2ecc71; /* Vert plus éclatant pour le sombre */
+                --subtitle-color: #aaaaaa; /* Gris plus clair */
+                --grid-line-color: rgba(255,255,255,0.1);
+                --event-bg: #2c2c2c;
+            }
+        }
+
+        /* 3. APPLICATION DES VARIABLES */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f9f4;
-            color: #2c3e50;
+            background-color: var(--bg-color); /* Utilisation du fond dynamique */
+            color: var(--text-color); /* Utilisation du texte dynamique */
             margin: 0;
             padding: 20px;
             display: flex;
@@ -20,8 +54,8 @@
             align-items: center;
         }
 
-        h1 { color: #27ae60; text-align: center; margin-bottom: 5px; }
-        .subtitle { color: #7f8c8d; margin-top: 0; margin-bottom: 30px; font-style: italic; }
+        h1 { color: var(--title-color); text-align: center; margin-bottom: 5px; }
+        .subtitle { color: var(--subtitle-color); margin-top: 0; margin-bottom: 30px; font-style: italic; }
 
         .dashboard {
             display: grid;
@@ -32,7 +66,7 @@
         }
 
         .card {
-            background: white;
+            background: var(--card-bg); /* Fond dynamique des cartes */
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -41,7 +75,6 @@
 
         .card-large { grid-column: span 2; }
 
-        /* Style pour les listes */
         .event-list {
             list-style-type: none;
             padding: 0;
@@ -51,20 +84,19 @@
         }
 
         .event-item {
-            background: #ecf0f1;
+            background: var(--event-bg); /* Fond dynamique des éléments */
             margin-bottom: 10px;
             padding: 15px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 5px solid #27ae60;
+            border-left: 5px solid var(--title-color); /* Vert dynamique */
         }
 
-        .event-item.alert { border-left-color: #2980b9; }
-        .event-item.archive { border-left-color: #27ae60; }
+        .event-item.alert { border-left-color: var(--accent-blue); }
+        .event-item.archive { border-left-color: var(--title-color); }
 
-        /* Boutons d'action */
         .btn {
             border: none;
             padding: 8px 15px;
@@ -74,21 +106,20 @@
             transition: 0.3s;
         }
         
-        .btn-video { background: #2980b9; color: white; }
-        .btn-video:hover { background: #3498db; }
+        .btn-video { background: var(--accent-blue); color: white; }
+        .btn-video:hover { background: var(--accent-blue-hover); }
 
-        .btn-csv { background: #27ae60; color: white; }
-        .btn-csv:hover { background: #2ecc71; }
+        .btn-csv { background: var(--title-color); color: white; }
+        .btn-csv:hover { background: var(--accent-green); }
         
-        /* Boutons larges pour récupérer toute la base */
-        .btn-csv-large { width: 100%; font-size: 1.1em; padding: 12px; background: #27ae60; color: white;}
-        .btn-csv-large:hover { background: #2ecc71; }
+        .btn-csv-large { width: 100%; font-size: 1.1em; padding: 12px; background: var(--title-color); color: white;}
+        .btn-csv-large:hover { background: var(--accent-green); }
 
-        .btn-video-large { width: 100%; font-size: 1.1em; padding: 12px; background: #2980b9; color: white;}
-        .btn-video-large:hover { background: #3498db; }
+        .btn-video-large { width: 100%; font-size: 1.1em; padding: 12px; background: var(--accent-blue); color: white;}
+        .btn-video-large:hover { background: var(--accent-blue-hover); }
 
-        .stat-valeur { font-size: 2.5em; font-weight: bold; color: #27ae60; margin: 10px 0;}
-        .stat-label { color: #7f8c8d; font-size: 0.9em; margin: 0; }
+        .stat-valeur { font-size: 2.5em; font-weight: bold; color: var(--title-color); margin: 10px 0;}
+        .stat-label { color: var(--subtitle-color); font-size: 0.9em; margin: 0; }
     </style>
 </head>
 <body>
@@ -138,7 +169,10 @@
         const now = new Date();
         document.getElementById('derniere-synchro').innerText = "Dernière synchronisation : Aujourd'hui à " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        // 2. Graphique Chart.js
+        // FONCTION UTILITAIRE POUR LIRE LES COULEURS CSS VARIABLES
+        const getStyle = (varName) => getComputedStyle(document.body).getPropertyValue(varName).trim();
+
+        // 2. Graphique Chart.js ADAPTÉ AU MODE SOMBRE
         const ctx = document.getElementById('temperatureChart').getContext('2d');
         const tempChart = new Chart(ctx, {
             type: 'line',
@@ -154,7 +188,25 @@
                     tension: 0.4
                 }]
             },
-            options: { responsive: true, scales: { y: { beginAtZero: false } } }
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        ticks: { color: getStyle('--text-color') }, // Dynamic X-axis ticks
+                        grid: { color: getStyle('--grid-line-color') } // Dynamic X-axis grid
+                    },
+                    y: {
+                        beginAtZero: false,
+                        ticks: { color: getStyle('--text-color') }, // Dynamic Y-axis ticks
+                        grid: { color: getStyle('--grid-line-color') } // Dynamic Y-axis grid
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: getStyle('--text-color') } // Dynamic Legend labels
+                    }
+                }
+            }
         });
 
         // 3. Remplissage de la galerie vidéo
@@ -178,46 +230,42 @@
             listeEvenements.appendChild(li);
         });
 
-        // 4. Remplissage des Archives CSV par jour
-        const archives = [
-            { jour: "Aujourd'hui (12 Avril)", releves: 48 },
-            { jour: "Hier (11 Avril)", releves: 48 },
-            { jour: "Mardi 10 Avril", releves: 46 },
-            { jour: "Lundi 09 Avril", releves: 48 }
-        ];
-
+        // 4. RÉCUPÉRER LES VRAIES ARCHIVES DU SERVEUR PYTHON
+        // On remplace par l'adresse IP de TON ordinateur
+        const ADRESSE_SERVEUR = "http://10.204.128.60:5000"; 
+        
         const listeArchives = document.getElementById('liste-archives');
-        archives.forEach(arc => {
-            let li = document.createElement('li');
-            li.className = `event-item archive`;
-            li.innerHTML = `
-                <div>
-                    <strong style="font-size: 1.1em;">${arc.jour}</strong><br>
-                    <span style="color: #7f8c8d; font-size: 0.9em;">${arc.releves} relevés enregistrés</span>
-                </div>
-                <button class="btn btn-csv" onclick="telechargerCSVJour('${arc.jour}')">📥 .CSV</button>
-            `;
-            listeArchives.appendChild(li);
-        });
+        listeArchives.innerHTML = "<p style='text-align:center;'>Connexion au nichoir en cours...</p>";
 
-        // 5. Fonction pour télécharger un jour spécifique (CSV)
-        function telechargerCSVJour(jourChoisi) {
-            let contenuCSV = "Date,Heure,Temperature_C,Humidite_%,Niveau_Batterie_%,Evenement\n";
-            contenuCSV += `${jourChoisi},07:00,13.5,65,88,Synchro normale\n`;
-            contenuCSV += `${jourChoisi},08:00,18.0,58,85,Synchro normale\n`;
+        // On va demander la liste des fichiers au serveur
+        fetch(`${ADRESSE_SERVEUR}/api/archives`)
+            .then(reponse => reponse.json())
+            .then(data => {
+                listeArchives.innerHTML = ""; // On vide le texte de chargement
+                
+                if (data.archives.length === 0) {
+                    listeArchives.innerHTML = "<p style='text-align:center;'>Aucune donnée enregistrée pour le moment.</p>";
+                    return;
+                }
 
-            const blob = new Blob([contenuCSV], { type: 'text/csv;charset=utf-8;' });
-            const lien = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            
-            lien.setAttribute("href", url);
-            lien.setAttribute("download", `donnees_${jourChoisi.replace(/ /g, '_')}.csv`);
-            lien.style.visibility = 'hidden';
-            
-            document.body.appendChild(lien);
-            lien.click();
-            document.body.removeChild(lien);
-        }
+                // Pour chaque jour trouvé sur le serveur, on crée un bouton
+                data.archives.forEach(jour => {
+                    let li = document.createElement('li');
+                    li.className = `event-item archive`;
+                    li.innerHTML = `
+                        <div>
+                            <strong style="font-size: 1.1em;">Relevé du ${jour}</strong><br>
+                            <span style="color: #7f8c8d; font-size: 0.9em;">Données synchronisées</span>
+                        </div>
+                        <button class="btn btn-csv" onclick="window.location.href='${ADRESSE_SERVEUR}/api/telecharger_csv/${jour}'">📥 Télécharger .CSV</button>
+                    `;
+                    listeArchives.appendChild(li);
+                });
+            })
+            .catch(erreur => {
+                listeArchives.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Impossible de contacter le serveur du nichoir.</p>";
+                console.error("Erreur de connexion :", erreur);
+            });
 
         // 6. Fonction pour télécharger TOUTE la base de données CSV
         function telechargerToutCSV() {
