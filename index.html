@@ -292,7 +292,26 @@
         // --- 7. BOUTONS GLOBAUX ---
 
         function telechargerToutCSV() {
-            alert("Cette fonction téléchargera bientôt tous les fichiers concaténés.");
+            alert("⏳ Récupération de la base de données complète en cours...");
+            
+            fetch(`${ADRESSE_SERVEUR}/api/telecharger_base_complete`, {
+                headers: { "ngrok-skip-browser-warning": "69420" }
+            })
+            .then(reponse => {
+                if (!reponse.ok) throw new Error("Erreur du serveur ou base de données vide");
+                return reponse.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "base_de_donnees_complete.csv"; 
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(err => alert("Erreur : " + err.message));
         }
 
         function telechargerToutesVideos() {
