@@ -169,7 +169,7 @@
         const now = new Date();
         document.getElementById('derniere-synchro').innerText = "Dernière synchronisation : Aujourd'hui à " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        // FONCTION UTILITAIRE POUR LIRE LES COULEURS CSS VARIABLES
+        // FONCTION UTILITAIRE POUR LIRE LES COULEURS CSS VARIABLES (Mode sombre / clair)
         const getStyle = (varName) => getComputedStyle(document.body).getPropertyValue(varName).trim();
 
         // 2. Graphique Chart.js ADAPTÉ AU MODE SOMBRE
@@ -230,15 +230,19 @@
             listeEvenements.appendChild(li);
         });
 
-        // 4. RÉCUPÉRER LES VRAIES ARCHIVES DU SERVEUR PYTHON
-        // On remplace par l'adresse IP de TON ordinateur
-        const ADRESSE_SERVEUR = "http://10.204.128.114:5000"; 
+        // 4. RÉCUPÉRER LES VRAIES ARCHIVES DU SERVEUR PYTHON VIA NGROK
+        // Ton adresse publique générée par le tunnel Ngrok sur le Raspberry Pi
+        const ADRESSE_SERVEUR = "https://dislikable-cain-tawnily.ngrok-free.dev"; 
         
         const listeArchives = document.getElementById('liste-archives');
         listeArchives.innerHTML = "<p style='text-align:center;'>Connexion au nichoir en cours...</p>";
 
-        // On va demander la liste des fichiers au serveur
-        fetch(`${ADRESSE_SERVEUR}/api/archives`)
+        // On va demander la liste des fichiers au serveur avec le laissez-passer Ngrok
+        fetch(`${ADRESSE_SERVEUR}/api/archives`, {
+            headers: {
+                "ngrok-skip-browser-warning": "true" // Passe-droit pour la version gratuite
+            }
+        })
             .then(reponse => reponse.json())
             .then(data => {
                 listeArchives.innerHTML = ""; // On vide le texte de chargement
@@ -267,7 +271,7 @@
                 console.error("Erreur de connexion :", erreur);
             });
 
-        // 6. Fonction pour télécharger TOUTE la base de données CSV
+        // 5. Fonction pour télécharger TOUTE la base de données CSV
         function telechargerToutCSV() {
             let contenuCSV = "Date,Heure,Temperature_C,Humidite_%,Niveau_Batterie_%,Evenement\n";
             contenuCSV += "09 Avril,12:00,16.0,60,95,Synchro normale\n";
@@ -288,7 +292,7 @@
             document.body.removeChild(lien);
         }
 
-        // 7. NOUVELLE FONCTION : Télécharger toutes les vidéos
+        // 6. Fonction pour télécharger toutes les vidéos
         function telechargerToutesVideos() {
             // Explication didactique pour le prototype
             alert("Simulation : Préparation de l'archive ZIP en cours...\n\n(Dans la version finale, le Raspberry Pi regroupera toutes les vidéos .mp4 dans un fichier 'videos_nichoir.zip' pour que le navigateur n'ait qu'un seul fichier à télécharger.)");
