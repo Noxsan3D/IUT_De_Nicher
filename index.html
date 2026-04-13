@@ -166,32 +166,26 @@
     document.getElementById('derniere-synchro').innerText = "Dernière synchro : " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
     // --- 2. GRAPHIQUE CHART.JS ---
-    const getStyle = (varName) => getComputedStyle(document.body).getPropertyValue(varName).trim();
-    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    let monGraphique; // On crée la variable ici pour y avoir accès plus tard
     
-    // On crée un graphique avec des données d'exemple (elles seront réelles plus tard)
-    new Chart(ctx, {
+    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    monGraphique = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
+            labels: [], // On commence vide
             datasets: [{
                 label: 'Température (°C)',
-                data: [14, 15.5, 18, 20.2, 21.5, 23],
+                data: [], // On commence vide
                 borderColor: '#e67e22',
-                backgroundColor: 'rgba(230, 126, 34, 0.1)',
-                borderWidth: 3,
+                tension: 0.4,
                 fill: true,
-                tension: 0.4
+                backgroundColor: 'rgba(230, 126, 34, 0.1)'
             }]
         },
         options: {
             responsive: true,
             scales: {
-                x: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } },
-                y: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } }
-            },
-            plugins: {
-                legend: { labels: { color: getStyle('--text-color') } }
+                y: { beginAtZero: false }
             }
         }
     });
