@@ -119,18 +119,24 @@
     <p class="subtitle" id="derniere-synchro">Dernière synchronisation : --:--</p>
 
     <div class="dashboard">
-        <div class="card" style="text-align: center;">
-            <h3 style="margin-top: 0;">Dernière Température 🌡️</h3>
-            <div class="stat-valeur" id="temp-actuelle">21.5 °C</div>
-            <p class="stat-label">Donnée temps réel</p>
+        <div class="card">
+            <h3 style="margin-top: 0;">Température 🌡️</h3>
+            <div class="stat-valeur" id="temp-actuelle">-- °C</div>
+            <p class="stat-label">Capteur thermique</p>
         </div>
 
-        <div class="card" style="text-align: center;">
-            <h3 style="margin-top: 0;">Niveau Batterie 🔋</h3>
-            <div class="stat-valeur" id="batterie-actuelle">85 %</div>
-            <p class="stat-label">Rechargement solaire OK ☀️</p>
+        <div class="card">
+            <h3 style="margin-top: 0;">Luminosité ☀️</h3>
+            <div class="stat-valeur" id="statut-luminosite">--</div>
+            <p class="stat-label">Cycle actuel</p>
         </div>
 
+        <div class="card">
+            <h3 style="margin-top: 0;">Oiseau 🦅</h3>
+            <div class="stat-valeur" id="statut-oiseau">--</div>
+            <p class="stat-label">Détection PIR</p>
+        </div>
+    
         <div class="card card-large">
             <h3 style="margin-top: 0;">Évolution de la température</h3>
             <canvas id="temperatureChart" height="80"></canvas>
