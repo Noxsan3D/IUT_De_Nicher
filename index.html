@@ -157,191 +157,179 @@
     </div>
 
     <script>
-        // --- 1. INITIALISATION DE L'HEURE ---
-        const now = new Date();
-        document.getElementById('derniere-synchro').innerText = "Synchronisation : " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    // --- 1. CONFIGURATION GLOBALE ---
+    // On déclare l'adresse tout en haut pour qu'elle soit accessible par toutes les fonctions
+    const ADRESSE_SERVEUR = "https://dislikable-cain-tawnily.ngrok-free.dev"; 
 
-        // --- 2. CONFIGURATION NGROK (METTRE TON ADRESSE ICI) ---
-        const ADRESSE_SERVEUR = "https://dislikable-cain-tawnily.ngrok-free.dev"; 
+    // Initialisation de l'heure de synchronisation
+    const now = new Date();
+    document.getElementById('derniere-synchro').innerText = "Dernière synchro : " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        // --- 3. GRAPHIQUE CHART.JS ---
-        const getStyle = (varName) => getComputedStyle(document.body).getPropertyValue(varName).trim();
-        const ctx = document.getElementById('temperatureChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['05:00', '06:00', '07:00', '08:00', '09:00', '10:00'],
-                datasets: [{
-                    label: 'Température (°C)',
-                    data: [12, 11.5, 14, 18, 21, 23],
-                    borderColor: '#e67e22',
-                    backgroundColor: 'rgba(230, 126, 34, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
-                }]
+    // --- 2. GRAPHIQUE CHART.JS ---
+    const getStyle = (varName) => getComputedStyle(document.body).getPropertyValue(varName).trim();
+    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    
+    // On crée un graphique avec des données d'exemple (elles seront réelles plus tard)
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
+            datasets: [{
+                label: 'Température (°C)',
+                data: [14, 15.5, 18, 20.2, 21.5, 23],
+                borderColor: '#e67e22',
+                backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } },
+                y: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } }
             },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } },
-                    y: { ticks: { color: getStyle('--text-color') }, grid: { color: getStyle('--grid-line-color') } }
-                }
+            plugins: {
+                legend: { labels: { color: getStyle('--text-color') } }
             }
+        }
+    });
+
+    // --- 3. CHARGEMENT DES ARCHIVES CSV ---
+    const listeArchives = document.getElementById('liste-archives');
+    listeArchives.innerHTML = "<p style='text-align:center;'>Connexion au Raspberry Pi...</p>";
+
+    fetch(`${ADRESSE_SERVEUR}/api/archives`, {
+        headers: { "ngrok-skip-browser-warning": "69420" }
+    })
+    .then(reponse => reponse.json())
+    .then(data => {
+        listeArchives.innerHTML = "";
+        if (!data.archives || data.archives.length === 0) {
+            listeArchives.innerHTML = "<p style='text-align:center;'>Aucun fichier trouvé.</p>";
+            return;
+        }
+        data.archives.forEach(jour => {
+            let li = document.createElement('li');
+            li.className = `event-item`;
+            li.innerHTML = `
+                <div><strong>📅 Relevé du ${jour}</strong></div>
+                <button class="btn btn-small" onclick="telechargerFichierCSV('${jour}')">📥 .CSV</button>
+            `;
+            listeArchives.appendChild(li);
         });
+    })
+    .catch(() => {
+        listeArchives.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Le Raspberry Pi est hors-ligne.</p>";
+    });
 
-        // --- 4. RÉCUPÉRATION DES ARCHIVES (CSV) ---
-        const listeArchives = document.getElementById('liste-archives');
-        listeArchives.innerHTML = "<p style='text-align:center;'>Connexion au Raspberry Pi...</p>";
+    // --- 4. CHARGEMENT DES VIDÉOS ---
+    const listeVideos = document.getElementById('liste-evenements');
+    listeVideos.innerHTML = "<p style='text-align:center;'>Recherche de vidéos...</p>";
 
-        fetch(`${ADRESSE_SERVEUR}/api/archives`, {
-            headers: { "ngrok-skip-browser-warning": "69420" }
-        })
-        .then(reponse => reponse.json())
-        .then(data => {
-            listeArchives.innerHTML = "";
-            if (!data.archives || data.archives.length === 0) {
-                listeArchives.innerHTML = "<p style='text-align:center;'>Aucun fichier trouvé.</p>";
-                return;
-            }
-            data.archives.forEach(jour => {
-                let li = document.createElement('li');
-                li.className = `event-item archive`;
-                li.innerHTML = `
-                    <div>
-                        <strong>📅 ${jour}</strong>
-                    </div>
-                    <button class="btn btn-csv" onclick="telechargerFichierCSV('${jour}')">📥 .CSV</button>
-                `;
-                listeArchives.appendChild(li);
-            });
-        })
-        .catch(() => {
-            listeArchives.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Le Raspberry Pi est hors-ligne.</p>";
+    fetch(`${ADRESSE_SERVEUR}/api/videos`, {
+        headers: { "ngrok-skip-browser-warning": "69420" }
+    })
+    .then(reponse => reponse.json())
+    .then(data => {
+        listeVideos.innerHTML = "";
+        if (!data.videos || data.videos.length === 0) {
+            listeVideos.innerHTML = "<p style='text-align:center;'>Aucune vidéo enregistrée.</p>";
+            return;
+        }
+        data.videos.forEach(video => {
+            let li = document.createElement('li');
+            li.className = `event-item alert`;
+            li.innerHTML = `
+                <div>
+                    <strong>🎥 ${video}</strong><br>
+                    <span style="color: #7f8c8d; font-size: 0.9em;">Mouvement détecté</span>
+                </div>
+                <button class="btn btn-blue btn-small" style="width:auto;" onclick="telechargerVideo('${video}')">▶ MP4</button>
+            `;
+            listeVideos.appendChild(li);
         });
+    })
+    .catch(() => {
+        listeVideos.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Impossible de contacter le serveur vidéo.</p>";
+    });
 
-        // --- 5. RÉCUPÉRATION DES VIDÉOS (.MP4) ---
-        const listeEvenements = document.getElementById('liste-evenements');
-        listeEvenements.innerHTML = "<p style='text-align:center;'>Recherche de vidéos en cours...</p>";
+    // --- 5. FONCTIONS DE TÉLÉCHARGEMENT (SYSTEME BLOB POUR NGROK) ---
 
-        fetch(`${ADRESSE_SERVEUR}/api/videos`, {
-            headers: { "ngrok-skip-browser-warning": "69420" }
+    // Télécharger un CSV journalier
+    function telechargerFichierCSV(jour) {
+        fetch(`${ADRESSE_SERVEUR}/api/telecharger_csv/${jour}`, {
+            headers: { "ngrok-skip-browser-warning": "69" }
         })
-        .then(reponse => reponse.json())
-        .then(data => {
-            listeEvenements.innerHTML = "";
-            if (!data.videos || data.videos.length === 0) {
-                listeEvenements.innerHTML = "<p style='text-align:center;'>Aucune vidéo enregistrée pour le moment.</p>";
-                return;
-            }
-            data.videos.forEach(video => {
-                let li = document.createElement('li');
-                li.className = `event-item alert`;
-                li.innerHTML = `
-                    <div>
-                        <strong style="font-size: 1.1em;">🎥 ${video}</strong><br>
-                        <span style="color: #7f8c8d; font-size: 0.9em;">Mouvement détecté</span>
-                    </div>
-                    <button class="btn btn-video" onclick="telechargerVideo('${video}')">▶ Télécharger (.mp4)</button>
-                `;
-                listeEvenements.appendChild(li);
-            });
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `donnees_${jour}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         })
-        .catch(() => {
-            listeEvenements.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Impossible de contacter le serveur vidéo.</p>";
-        });
+        .catch(err => alert("Erreur : " + err.message));
+    }
 
-        // --- 6. FONCTIONS DE TÉLÉCHARGEMENT BYPASS NGROK ---
+    // Télécharger la base complète
+    function telechargerToutCSV() {
+        alert("⏳ Récupération de la base de données complète...");
+        fetch(`${ADRESSE_SERVEUR}/api/telecharger_base_complete`, {
+            headers: { "ngrok-skip-browser-warning": "69" }
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "base_de_donnees_complete.csv";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        })
+        .catch(err => alert("Erreur : " + err.message));
+    }
 
-        function telechargerFichierCSV(jour) {
-            fetch(`${ADRESSE_SERVEUR}/api/telecharger_csv/${jour}`, {
-                headers: { "ngrok-skip-browser-warning": "69420" }
-            })
-            .then(reponse => {
-                if (!reponse.ok) throw new Error("Erreur de téléchargement");
-                return reponse.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `donnees_${jour}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(err => alert("Erreur : " + err.message));
-        }
+    // Télécharger une vidéo MP4
+    function telechargerVideo(nom) {
+        fetch(`${ADRESSE_SERVEUR}/api/telecharger_video/${nom}`, {
+            headers: { "ngrok-skip-browser-warning": "69" }
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nom;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        })
+        .catch(err => alert("Erreur : " + err.message));
+    }
 
-        function telechargerVideo(video) {
-            fetch(`${ADRESSE_SERVEUR}/api/telecharger_video/${video}`, {
-                headers: { "ngrok-skip-browser-warning": "69420" }
-            })
-            .then(reponse => {
-                if (!reponse.ok) throw new Error("Erreur de téléchargement vidéo");
-                return reponse.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = video; // Le nom du fichier sera le nom de la vidéo
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(err => alert("Erreur : " + err.message));
-        }
-
-        // --- 7. BOUTONS GLOBAUX ---
-
-        function telechargerToutCSV() {
-            alert("⏳ Récupération de la base de données complète en cours...");
-            
-            fetch(`${ADRESSE_SERVEUR}/api/telecharger_base_complete`, {
-                headers: { "ngrok-skip-browser-warning": "69420" }
-            })
-            .then(reponse => {
-                if (!reponse.ok) throw new Error("Erreur du serveur ou base de données vide");
-                return reponse.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "base_de_donnees_complete.csv"; 
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(err => alert("Erreur : " + err.message));
-        }
-
-        function telechargerToutesVideos() {
-            alert("⏳ Création de l'archive ZIP en cours sur le Raspberry Pi...\nVeuillez patienter quelques secondes.");
-            
-            fetch(`${ADRESSE_SERVEUR}/api/telecharger_toutes_videos`, {
-                headers: { "ngrok-skip-browser-warning": "69420" }
-            })
-            .then(reponse => {
-                if (!reponse.ok) throw new Error("Aucune vidéo trouvée ou erreur du serveur");
-                return reponse.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "videos_nichoir.zip"; // Le nom de ton dossier compressé
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(err => alert("Erreur : " + err.message));
-        }
-    </script>
+    // Télécharger toutes les vidéos en ZIP
+    function telechargerToutesVideos() {
+        alert("⏳ Création de l'archive ZIP sur le Raspberry Pi...");
+        fetch(`${ADRESSE_SERVEUR}/api/telecharger_toutes_videos`, {
+            headers: { "ngrok-skip-browser-warning": "69" }
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "videos_nichoir.zip";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        })
+        .catch(err => alert("Erreur : " + err.message));
+    }
+</script>
 </body>
 </html>
