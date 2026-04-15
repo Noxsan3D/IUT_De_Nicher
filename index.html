@@ -63,6 +63,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             position: relative;
+            transition: 0.3s;
         }
 
         .card-large { grid-column: span 2; }
@@ -134,7 +135,7 @@
         <div class="card">
             <h3 style="margin-top: 0;">Oiseau 🦅</h3>
             <div class="stat-valeur" id="statut-oiseau">--</div>
-            <p class="stat-label">Détection PIR</p>
+            <p class="stat-label">Barrière Infrarouge</p>
         </div>
     
         <div class="card card-large">
@@ -158,7 +159,6 @@
 
     <script>
     // --- 1. CONFIGURATION GLOBALE ---
-    // On déclare l'adresse tout en haut pour qu'elle soit accessible par toutes les fonctions
     const ADRESSE_SERVEUR = "https://dislikable-cain-tawnily.ngrok-free.dev"; 
 
     // Initialisation de l'heure de synchronisation
@@ -166,16 +166,16 @@
     document.getElementById('derniere-synchro').innerText = "Dernière synchro : " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
     // --- 2. GRAPHIQUE CHART.JS ---
-    let monGraphique; // On crée la variable ici pour y avoir accès plus tard
+    let monGraphique; 
     
     const ctx = document.getElementById('temperatureChart').getContext('2d');
     monGraphique = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: [], // On commence vide
+            labels: [], 
             datasets: [{
                 label: 'Température (°C)',
-                data: [], // On commence vide
+                data: [], 
                 borderColor: '#e67e22',
                 tension: 0.4,
                 fill: true,
@@ -209,7 +209,7 @@
             li.className = `event-item`;
             li.innerHTML = `
                 <div><strong>📅 Relevé du ${jour}</strong></div>
-                <button class="btn btn-small" onclick="telechargerFichierCSV('${jour}')">📥 .CSV</button>
+                <button class="btn btn-csv" onclick="telechargerFichierCSV('${jour}')">📥 .CSV</button>
             `;
             listeArchives.appendChild(li);
         });
@@ -240,7 +240,7 @@
                     <strong>🎥 ${video}</strong><br>
                     <span style="color: #7f8c8d; font-size: 0.9em;">Mouvement détecté</span>
                 </div>
-                <button class="btn btn-blue btn-small" style="width:auto;" onclick="telechargerVideo('${video}')">▶ MP4</button>
+                <button class="btn btn-video" style="width:auto;" onclick="telechargerVideo('${video}')">▶ MP4</button>
             `;
             listeVideos.appendChild(li);
         });
@@ -249,9 +249,8 @@
         listeVideos.innerHTML = "<p style='color:red; text-align:center;'>⚠️ Impossible de contacter le serveur vidéo.</p>";
     });
 
-    // --- 5. FONCTIONS DE TÉLÉCHARGEMENT (SYSTEME BLOB POUR NGROK) ---
+    // --- 5. FONCTIONS DE TÉLÉCHARGEMENT (BLOB) ---
 
-    // Télécharger un CSV journalier
     function telechargerFichierCSV(jour) {
         fetch(`${ADRESSE_SERVEUR}/api/telecharger_csv/${jour}`, {
             headers: { "ngrok-skip-browser-warning": "69" }
@@ -269,7 +268,6 @@
         .catch(err => alert("Erreur : " + err.message));
     }
 
-    // Télécharger la base complète
     function telechargerToutCSV() {
         alert("⏳ Récupération de la base de données complète...");
         fetch(`${ADRESSE_SERVEUR}/api/telecharger_base_complete`, {
@@ -288,7 +286,6 @@
         .catch(err => alert("Erreur : " + err.message));
     }
 
-    // Télécharger une vidéo MP4
     function telechargerVideo(nom) {
         fetch(`${ADRESSE_SERVEUR}/api/telecharger_video/${nom}`, {
             headers: { "ngrok-skip-browser-warning": "69" }
@@ -306,7 +303,6 @@
         .catch(err => alert("Erreur : " + err.message));
     }
 
-    // Télécharger toutes les vidéos en ZIP
     function telechargerToutesVideos() {
         alert("⏳ Création de l'archive ZIP sur le Raspberry Pi...");
         fetch(`${ADRESSE_SERVEUR}/api/telecharger_toutes_videos`, {
@@ -325,14 +321,40 @@
         .catch(err => alert("Erreur : " + err.message));
     }
 
-// --- 8. NOUVEAU SYSTÈME : ÉCOUTE EN TEMPS RÉEL (LONG POLLING) ---
+    // --- 6. GESTION DES DONNÉES EN TEMPS RÉEL (LONG POLLING) ---
+
+    // A. Fonction pour charger les données au tout premier démarrage
+    function actualiserDashboard() {
+        fetch(`${ADRESSE_SERVEUR}/api/dernieres_donnees`, {
+            headers: { "ngrok-skip-browser-warning": "69" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.erreur) return;
+
+            document.getElementById('temp-actuelle').innerText = data.temperature + " °C";
+            document.getElementById('statut-luminosite').innerText = data.jour_nuit;
+            document.getElementById('statut-oiseau').innerText = data.oiseau;
+            document.getElementById('derniere-synchro').innerText = "Dernière donnée : " + data.heure;
+            
+            const cardOiseau = document.getElementById('statut-oiseau').parentElement;
+            if (data.oiseau.toLowerCase().includes("oui")) {
+                cardOiseau.style.border = "2px solid #2ecc71";
+            } else {
+                cardOiseau.style.border = "none";
+            }
+        })
+        .catch(err => console.log("Le serveur ne répond pas encore..."));
+    }
+
+    // B. Fonction d'écoute permanente (Le mode "Push")
     function ecouterLeServeur() {
         fetch(`${ADRESSE_SERVEUR}/api/ecoute_directe`, {
             headers: { "ngrok-skip-browser-warning": "69" }
         })
         .then(res => res.json())
         .then(data => {
-            // Si le serveur a renvoyé de vraies données (l'ESP32 a parlé)
+            // Si l'ESP32 a envoyé de vraies nouveautés
             if (!data.statut || data.statut !== "rien_de_neuf") {
                 document.getElementById('temp-actuelle').innerText = data.temperature + " °C";
                 document.getElementById('statut-luminosite').innerText = data.jour_nuit;
@@ -347,22 +369,21 @@
                 }
             }
             
-            // QUOI QU'IL ARRIVE : On relance immédiatement l'écoute !
+            // Quoi qu'il arrive, on se remet en salle d'attente instantanément
             ecouterLeServeur(); 
         })
         .catch(err => {
-            // Si le serveur est redémarré ou coupé, on attend 5 secondes avant de réessayer
-            console.log("Perte de connexion, reconnexion dans 5s...");
+            // Si le serveur coupe, on attend 5 secondes avant de retenter pour ne pas saturer le navigateur
+            console.log("Perte de connexion au serveur, reconnexion dans 5s...");
             setTimeout(ecouterLeServeur, 5000);
         });
     }
 
-    // On lance la boucle infinie au chargement de la page
-    actualiserDashboard(); // Fait un premier affichage pour remplir les cases
-    ecouterLeServeur();    // Puis se met en attente de nouveautés
+    // On lance le système
+    actualiserDashboard(); // Remplit la page au démarrage
+    ecouterLeServeur();    // Lance l'écoute infinie
 
-    
-
+    // --- 7. ACTUALISATION DU GRAPHIQUE HISTORIQUE ---
     function mettreAJourGraphique() {
         fetch(`${ADRESSE_SERVEUR}/api/historique`, {
             headers: { "ngrok-skip-browser-warning": "69" }
@@ -370,19 +391,16 @@
         .then(res => res.json())
         .then(data => {
             if (data.labels && data.valeurs) {
-                // On remplace les anciennes données par les nouvelles
                 monGraphique.data.labels = data.labels;
                 monGraphique.data.datasets[0].data = data.valeurs;
-                
-                // On demande au graphique de se redessiner
                 monGraphique.update();
             }
         });
     }
 
-    // Appeler la fonction au démarrage et toutes les 10 secondes
     mettreAJourGraphique();
-    setInterval(mettreAJourGraphique, 60000);
-</script>
+    setInterval(mettreAJourGraphique, 60000); // Le graphique se met à jour toutes les 60 secondes (c'est suffisant)
+    
+    </script>
 </body>
 </html>
