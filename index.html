@@ -345,6 +345,7 @@
             // Si l'ESP32 a envoyé une nouvelle donnée, on met à jour !
             if (data && data.statut === "nouveau") {
                 mettreAJourCartes(data);
+                mettreAJourGraphique();
             }
         })
         .catch(err => console.log("Attente réseau...")); // Reste silencieux en cas de micro-coupure
